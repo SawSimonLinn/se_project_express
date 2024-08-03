@@ -5,4 +5,4 @@ const ERROR_CODES = {
   SERVER_ERROR: 500,
 };
 
-module.exports = ERROR_CODES;
+module.exports = { ERROR_CODES };

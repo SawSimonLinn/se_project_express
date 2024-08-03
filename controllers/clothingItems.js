@@ -1,6 +1,7 @@
 const clothingItemSchema = require("../models/clothingItem");
+const { ERROR_CODES } = require("../utils/errors");
 
-// Create a new item
+// ?  Create a new item (POST/api/clothingItems)
 const createItem = (req, res) => {
   const { name, weather, imageUrl } = req.body;
   const owner = req.user._id;
@@ -10,27 +11,31 @@ const createItem = (req, res) => {
     .create({ name, weather, imageUrl, owner })
     .then((item) => {
       console.log(item);
-      res.status(200).send({ data: item });
+      res.status(ERROR_CODES.REQUEST_SUCCESSFUL).send({ data: item });
     })
     .catch((e) => {
       console.error(e);
-      return res.status(500).send({ message: "Error form createItem", e });
+      return res
+        .status(ERROR_CODES.SERVER_ERROR)
+        .send({ message: "Error form createItem", e });
     });
 };
 
-//Get all items
+// ? Get all items (GET/api/clothingItems)
 const getItems = (req, res) => {
   console.log("getItems called");
   clothingItemSchema
     .find({})
-    .then((items) => res.status(200).send(items))
+    .then((items) => res.status(ERROR_CODES.REQUEST_SUCCESSFUL).send(items))
     .catch((err) => {
       console.error(err);
-      return res.status(500).send({ message: "Error form getItems", e });
+      return res
+        .status(ERROR_CODES.SERVER_ERROR)
+        .send({ message: "Error form getItems", e });
     });
 };
 
-//Update an item
+// ? Update an item (PUT/api/clothingItems/:itemId)
 const updateItem = (req, res) => {
   const { itemId } = req.params;
   const { name, weather, imageUrl } = req.body;
@@ -38,14 +43,18 @@ const updateItem = (req, res) => {
   clothingItemSchema
     .findByIdAndUpdate(itemId, { name, weather, imageUrl }, { new: true })
     .orFail()
-    .then((item) => res.status(200).send({ data: item }))
+    .then((item) =>
+      res.status(ERROR_CODES.REQUEST_SUCCESSFUL).send({ data: item })
+    )
     .catch((e) => {
       console.error(e);
-      return res.status(500).send({ message: "Error from updateItem", e });
+      return res
+        .status(ERROR_CODES.SERVER_ERROR)
+        .send({ message: "Error from updateItem", e });
     });
 };
 
-//Delete an item
+// ? Delete an item (DELETE/api/clothingItems/:itemId)
 const deleteItem = (req, res) => {
   console.log("deleteItem called");
   const { itemId } = req.params;
@@ -53,14 +62,18 @@ const deleteItem = (req, res) => {
   clothingItemSchema
     .findByIdAndDelete(itemId)
     .orFail()
-    .then((item) => res.status(200).send({ data: item }))
+    .then((item) =>
+      res.status(ERROR_CODES.REQUEST_SUCCESSFUL).send({ data: item })
+    )
     .catch((e) => {
       console.error(e);
-      return res.status(500).send({ message: "Error from deleteItem", e });
+      return res
+        .status(ERROR_CODES.SERVER_ERROR)
+        .send({ message: "Error from deleteItem", e });
     });
 };
 
-//Like an item
+// ? Like an item (PUT/api/clothingItems/:itemId/likes)
 const likeItem = (req, res) => {
   console.log("likeItem called");
 
@@ -74,15 +87,17 @@ const likeItem = (req, res) => {
     .then((item) => {
       console.log(item);
       console.log(item.likes);
-      res.status(200).send({ data: item });
+      res.status(ERROR_CODES.REQUEST_SUCCESSFUL).send({ data: item });
     })
     .catch((e) => {
       console.error(e);
-      return res.status(500).send({ message: "Error from likeItem", e });
+      return res
+        .status(ERROR_CODES.SERVER_ERROR)
+        .send({ message: "Error from likeItem", e });
     });
 };
 
-//Unlike an item
+// ? Unlike an item (DELETE/api/clothingItems/:itemId/likes)
 const unlikeItem = (req, res) => {
   console.log("unlikeItem called");
 
@@ -96,14 +111,17 @@ const unlikeItem = (req, res) => {
     .then((item) => {
       console.log(item);
       console.log(item.likes);
-      res.status(200).send({ data: item });
+      res.status(ERROR_CODES.REQUEST_SUCCESSFUL).send({ data: item });
     })
     .catch((e) => {
       console.error(e);
-      return res.status(500).send({ message: "Error from unlikeItem", e });
+      return res
+        .status(ERROR_CODES.SERVER_ERROR)
+        .send({ message: "Error from unlikeItem", e });
     });
 };
 
+// Export the functions
 module.exports = {
   createItem,
   getItems,
