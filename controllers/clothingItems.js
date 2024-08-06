@@ -5,78 +5,63 @@ const { ERROR_CODES } = require("../utils/errors");
 const createItem = (req, res) => {
   const { name, weather, imageUrl } = req.body;
   const owner = req.user._id;
-  console.log(name, weather, imageUrl, owner);
 
   clothingItemSchema
     .create({ name, weather, imageUrl, owner })
     .then((item) => {
-      console.log(item);
-      res.status(ERROR_CODES.REQUEST_SUCCESSFUL).send({ data: item });
+      res.send({ data: item });
     })
     .catch((e) => {
       console.error(e);
+      if (e.name === "ValidationError") {
+        return res
+          .status(ERROR_CODES.INVALID_DATA)
+          .send({ message: "Invalid data" });
+      }
       return res
         .status(ERROR_CODES.SERVER_ERROR)
-        .send({ message: "Error form createItem", e });
+        .send({ message: "Error form createItem" });
     });
 };
 
 // ? Get all items (GET/api/clothingItems)
 const getItems = (req, res) => {
-  console.log("getItems called");
   clothingItemSchema
     .find({})
-    .then((items) => res.status(ERROR_CODES.REQUEST_SUCCESSFUL).send(items))
-    .catch((err) => {
-      console.error(err);
-      return res
-        .status(ERROR_CODES.SERVER_ERROR)
-        .send({ message: "Error form getItems", e });
-    });
-};
-
-// ? Update an item (PUT/api/clothingItems/:itemId)
-const updateItem = (req, res) => {
-  const { itemId } = req.params;
-  const { name, weather, imageUrl } = req.body;
-
-  clothingItemSchema
-    .findByIdAndUpdate(itemId, { name, weather, imageUrl }, { new: true })
-    .orFail()
-    .then((item) =>
-      res.status(ERROR_CODES.REQUEST_SUCCESSFUL).send({ data: item })
-    )
+    .then((items) => res.send(items))
     .catch((e) => {
       console.error(e);
       return res
         .status(ERROR_CODES.SERVER_ERROR)
-        .send({ message: "Error from updateItem", e });
+        .send({ message: "Error form getItems" });
     });
 };
 
 // ? Delete an item (DELETE/api/clothingItems/:itemId)
 const deleteItem = (req, res) => {
-  console.log("deleteItem called");
   const { itemId } = req.params;
 
   clothingItemSchema
     .findByIdAndDelete(itemId)
     .orFail()
-    .then((item) =>
-      res.status(ERROR_CODES.REQUEST_SUCCESSFUL).send({ data: item })
-    )
+    .then((item) => res.send({ data: item }))
     .catch((e) => {
-      console.error(e);
+      if (e.name === "CastError") {
+        return res
+          .status(ERROR_CODES.INVALID_DATA)
+          .send({ message: "Invalid ID" });
+      }
+      if (e.name === "DocumentNotFoundError") {
+        res.status(ERROR_CODES.NOT_FOUND).send({ message: "Item not found" });
+      }
       return res
         .status(ERROR_CODES.SERVER_ERROR)
-        .send({ message: "Error from deleteItem", e });
+        .send({ message: "Server error" });
     });
 };
 
 // ? Like an item (PUT/api/clothingItems/:itemId/likes)
 const likeItem = (req, res) => {
-  console.log("likeItem called");
-
   clothingItemSchema
     .findByIdAndUpdate(
       req.params.itemId,
@@ -85,22 +70,25 @@ const likeItem = (req, res) => {
     )
     .orFail()
     .then((item) => {
-      console.log(item);
-      console.log(item.likes);
-      res.status(ERROR_CODES.REQUEST_SUCCESSFUL).send({ data: item });
+      res.send({ data: item });
     })
     .catch((e) => {
-      console.error(e);
+      if (e.name === "CastError") {
+        return res
+          .status(ERROR_CODES.INVALID_DATA)
+          .send({ message: "Invalid ID" });
+      }
+      if (e.name === "DocumentNotFoundError") {
+        res.status(ERROR_CODES.NOT_FOUND).send({ message: "Item not found" });
+      }
       return res
         .status(ERROR_CODES.SERVER_ERROR)
-        .send({ message: "Error from likeItem", e });
+        .send({ message: "Server error" });
     });
 };
 
 // ? Unlike an item (DELETE/api/clothingItems/:itemId/likes)
 const unlikeItem = (req, res) => {
-  console.log("unlikeItem called");
-
   clothingItemSchema
     .findByIdAndUpdate(
       req.params.itemId,
@@ -109,15 +97,20 @@ const unlikeItem = (req, res) => {
     )
     .orFail()
     .then((item) => {
-      console.log(item);
-      console.log(item.likes);
-      res.status(ERROR_CODES.REQUEST_SUCCESSFUL).send({ data: item });
+      res.send({ data: item });
     })
     .catch((e) => {
-      console.error(e);
+      if (e.name === "CastError") {
+        return res
+          .status(ERROR_CODES.INVALID_DATA)
+          .send({ message: "Invalid ID" });
+      }
+      if (e.name === "DocumentNotFoundError") {
+        res.status(ERROR_CODES.NOT_FOUND).send({ message: "Item not found" });
+      }
       return res
         .status(ERROR_CODES.SERVER_ERROR)
-        .send({ message: "Error from unlikeItem", e });
+        .send({ message: "Server error" });
     });
 };
 
@@ -125,7 +118,6 @@ const unlikeItem = (req, res) => {
 module.exports = {
   createItem,
   getItems,
-  updateItem,
   deleteItem,
   likeItem,
   unlikeItem,
