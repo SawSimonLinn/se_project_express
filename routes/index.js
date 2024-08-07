@@ -3,9 +3,7 @@ const router = require("express").Router();
 const userRouter = require("./users");
 const itemRouter = require("./clothingItems");
 
-const ERROR_CODES = {
-  NOT_FOUND: 404,
-};
+const ERROR_CODES = require("../utils/errors");
 
 router.use("/users", userRouter);
 router.use("/items", itemRouter);
