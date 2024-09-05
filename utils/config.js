@@ -1,2 +1,3 @@
-const JWR_SECRET = "Password123";
-module.exports = { JWR_SECRET };
+const JWT_SECRET = "testingKey";
+
+module.exports = { JWT_SECRET };

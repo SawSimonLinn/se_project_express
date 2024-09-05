@@ -1,9 +1,15 @@
 const router = require("express").Router();
 
-const { getUsers, createUsers, getUserById } = require("../controllers/users");
+const { auth } = require("../middlewares/auth");
+
+const {
+  getCurrentUser,
+  createUsers,
+  getUserById,
+} = require("../controllers/users");
 
 // CRUD operations
-router.get("/", getUsers);
+router.get("/me", auth, getCurrentUser);
 
 // create a new user
 router.post("/", createUsers);
