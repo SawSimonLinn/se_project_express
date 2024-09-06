@@ -2,29 +2,15 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { JWT_SECRET } = require("../utils/config");
 
-const userSchema = require("../models/user");
+const UserSchema = require("../models/user");
 const { ERROR_CODES } = require("../utils/errors");
-
-// ? Get all users (GET/api/users)
-const getUsers = (req, res) => {
-  userSchema
-    .find({})
-    .then((users) => res.send(users))
-    .catch((err) => {
-      console.error(err);
-      return res
-        .status(ERROR_CODES.SERVER_ERROR)
-        .send({ message: "An error has occurred on the server" });
-    });
-};
 
 // ? Create a new user (POST/api/users)
 const createUsers = async (req, res) => {
   const { name, avatar, email, password } = req.body;
-  console.log(name, avatar, email, password);
 
   try {
-    const existingUser = await userSchema.findOne({ email });
+    const existingUser = await UserSchema.findOne({ email });
     if (existingUser) {
       return res
         .status(ERROR_CODES.CONFLICT)
@@ -33,7 +19,7 @@ const createUsers = async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const user = new userSchema({
+    const user = new UserSchema({
       name,
       avatar,
       email,
@@ -53,13 +39,13 @@ const createUsers = async (req, res) => {
       .status(ERROR_CODES.SERVER_ERROR)
       .send({ message: "Error from createUsers" });
   }
+
+  return res.send({ name, avatar, email, password });
 };
 
 // ? Login user (POST/api/signin)
 const loginUser = (req, res, next) => {
   const { email, password } = req.body;
-  // console.log(req.body);
-  // console.log(email, password);
 
   if (!email || !password) {
     return res
@@ -67,11 +53,8 @@ const loginUser = (req, res, next) => {
       .send({ message: "Email and password are required" });
   }
 
-  return userSchema
-    .findUserByCredentials(email, password)
+  return UserSchema.findUserByCredentials(email, password)
     .then((user) => {
-      console.log("User found:", user);
-
       const token = jwt.sign({ _id: user._id }, JWT_SECRET, {
         expiresIn: "7d",
       });
@@ -90,65 +73,57 @@ const loginUser = (req, res, next) => {
     });
 };
 
-// ? Get a user by id (GET/api/users/:userId)
-const getUserById = (req, res) => {
-  const { userId } = req.params;
+// ? Get current user (GET/api/users/me)
+const getCurrentUser = (req, res, next) => {
+  const { _id } = req.user;
 
-  userSchema
-    .findById(userId)
-    .then((user) => {
-      if (!user) {
-        return res
-          .status(ERROR_CODES.NOT_FOUND)
-          .send({ message: "User not found" });
-      }
-      return res.send(user);
-    })
+  UserSchema.findById(_id)
+    .orFail(new Error("User not found"))
+    .then((user) => res.send(user))
     .catch((err) => {
       console.error(err);
+      if (err.message === "User not found") {
+        return res.status(ERROR_CODES.NOT_FOUND).send({ message: err.message });
+      }
       if (err.name === "CastError") {
         return res
           .status(ERROR_CODES.INVALID_DATA)
           .send({ message: "Invalid ID" });
       }
-      return res
-        .status(ERROR_CODES.SERVER_ERROR)
-        .send({ message: "An error has occurred on the server" });
+      return next(err);
     });
 };
 
-//? Get current user (GET/api/users/me)
-const getCurrentUser = (req, res, next) => {
+// ? Update user (PATCH/api/users/me)
+const updateUser = (req, res, next) => {
   const { _id } = req.user;
+  const { name, avatar } = req.body;
 
-  console.log(_id);
-  userSchema
-    .findById(_id)
+  UserSchema.findByIdAndUpdate(
+    _id,
+    { name, avatar },
+    { new: true, runValidators: true }
+  )
     .orFail(new Error("User not found"))
-    .then((user) => {
-      return res.send(user);
-    })
+    .then((user) => res.send(user))
     .catch((err) => {
       console.error(err);
       if (err.message === "User not found") {
         return res.status(ERROR_CODES.NOT_FOUND).send({ message: err.message });
-      } else if (err.name === "CastError") {
+      }
+      if (err.name === "CastError") {
         return res
           .status(ERROR_CODES.INVALID_DATA)
           .send({ message: "Invalid ID" });
-      } else {
-        next(err);
       }
       return next(err);
     });
-
-  return res.send(user);
 };
+
 // Export the functions
 module.exports = {
-  getUsers,
   createUsers,
-  getUserById,
   loginUser,
   getCurrentUser,
+  updateUser,
 };

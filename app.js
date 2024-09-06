@@ -1,5 +1,6 @@
 const express = require("express");
 const mongoose = require("mongoose");
+const cors = require("cors");
 
 const mainRouter = require("./routes/index");
 
@@ -17,13 +18,8 @@ mongoose
     console.error("Error connecting to the database", error);
   });
 
-// Middleware
-app.use((req, res, next) => {
-  req.user = {
-    _id: "66d92a0adef58e80bd33b478",
-  };
-  next();
-});
+// CORS
+app.use(cors());
 
 // JSON parsing
 app.use(express.json());

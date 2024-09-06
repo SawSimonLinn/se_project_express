@@ -12,14 +12,12 @@ const auth = async (req, res, next) => {
   }
 
   const token = authorization.replace("Bearer ", "");
-
   let payload;
+
   try {
-    console.log(JWT_SECRET);
-    console.log(token);
     payload = jwt.verify(token, JWT_SECRET);
   } catch (e) {
-    console.error(e);
+    console.error(e); // Log the error for debugging
 
     return res
       .status(ERROR_CODES.UNAUTHORIZED)
