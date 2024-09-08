@@ -42,9 +42,22 @@ const deleteItem = (req, res) => {
   const { itemId } = req.params;
 
   clothingItemSchema
-    .findByIdAndDelete(itemId)
+    .findById(itemId)
     .orFail()
-    .then((item) => res.send({ data: item }))
+    .then((item) => {
+      if (item.owner.toString() !== req.user._id) {
+        return res
+          .status(ERROR_CODES.FORBIDDEN)
+          .send({ message: "You are not the owner of this item" });
+      }
+      return item
+        .deleteOne()
+        .then(() =>
+          res
+            .status(ERROR_CODES.REQUEST_SUCCESSFUL)
+            .send({ message: "Item deleted" })
+        );
+    })
     .catch((e) => {
       if (e.name === "CastError") {
         return res
@@ -52,7 +65,9 @@ const deleteItem = (req, res) => {
           .send({ message: "Invalid ID" });
       }
       if (e.name === "DocumentNotFoundError") {
-        res.status(ERROR_CODES.NOT_FOUND).send({ message: "Item not found" });
+        return res
+          .status(ERROR_CODES.NOT_FOUND)
+          .send({ message: "Item not found" });
       }
       return res
         .status(ERROR_CODES.SERVER_ERROR)
@@ -79,7 +94,9 @@ const likeItem = (req, res) => {
           .send({ message: "Invalid ID" });
       }
       if (e.name === "DocumentNotFoundError") {
-        res.status(ERROR_CODES.NOT_FOUND).send({ message: "Item not found" });
+        return res
+          .status(ERROR_CODES.NOT_FOUND)
+          .send({ message: "Item not found" });
       }
       return res
         .status(ERROR_CODES.SERVER_ERROR)
@@ -106,7 +123,9 @@ const unlikeItem = (req, res) => {
           .send({ message: "Invalid ID" });
       }
       if (e.name === "DocumentNotFoundError") {
-        res.status(ERROR_CODES.NOT_FOUND).send({ message: "Item not found" });
+        return res
+          .status(ERROR_CODES.NOT_FOUND)
+          .send({ message: "Item not found" });
       }
       return res
         .status(ERROR_CODES.SERVER_ERROR)

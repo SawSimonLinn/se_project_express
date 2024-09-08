@@ -10,13 +10,6 @@ const createUsers = async (req, res) => {
   const { name, avatar, email, password } = req.body;
 
   try {
-    const existingUser = await UserSchema.findOne({ email });
-    if (existingUser) {
-      return res
-        .status(ERROR_CODES.CONFLICT)
-        .send({ message: "User with this email already exists" });
-    }
-
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const user = new UserSchema({
@@ -27,9 +20,16 @@ const createUsers = async (req, res) => {
     });
 
     const savedUser = await user.save();
-    res.send({ data: savedUser });
+    const userObject = savedUser.toObject();
+    delete userObject.password;
+    res.send({ data: userObject });
   } catch (e) {
     console.error(e);
+    if (e.name === "ValidationError") {
+      return res
+        .status(ERROR_CODES.INVALID_DATA)
+        .send({ message: "Invalid data" });
+    }
     if (e.code === 11000) {
       return res
         .status(ERROR_CODES.CONFLICT)
@@ -39,12 +39,13 @@ const createUsers = async (req, res) => {
       .status(ERROR_CODES.SERVER_ERROR)
       .send({ message: "Error from createUsers" });
   }
-
-  return res.send({ name, avatar, email, password });
+  return res
+    .status(ERROR_CODES.REQUEST_SUCCESSFUL)
+    .send({ message: "User created" });
 };
 
 // ? Login user (POST/api/signin)
-const loginUser = (req, res, next) => {
+const loginUser = (req, res) => {
   const { email, password } = req.body;
 
   if (!email || !password) {
@@ -68,13 +69,12 @@ const loginUser = (req, res, next) => {
           .status(ERROR_CODES.UNAUTHORIZED)
           .send({ message: err.message });
       }
-
-      return next(err);
+      return res.status(500).send({ message: "Internal Server Error" });
     });
 };
 
 // ? Get current user (GET/api/users/me)
-const getCurrentUser = (req, res, next) => {
+const getCurrentUser = (req, res) => {
   const { _id } = req.user;
 
   UserSchema.findById(_id)
@@ -90,12 +90,12 @@ const getCurrentUser = (req, res, next) => {
           .status(ERROR_CODES.INVALID_DATA)
           .send({ message: "Invalid ID" });
       }
-      return next(err);
+      return res.status(500).send({ message: "Internal Server Error" });
     });
 };
 
 // ? Update user (PATCH/api/users/me)
-const updateUser = (req, res, next) => {
+const updateUser = (req, res) => {
   const { _id } = req.user;
   const { name, avatar } = req.body;
 
@@ -108,6 +108,11 @@ const updateUser = (req, res, next) => {
     .then((user) => res.send(user))
     .catch((err) => {
       console.error(err);
+      if (err.name === "ValidationError") {
+        return res
+          .status(ERROR_CODES.INVALID_DATA)
+          .send({ message: "Invalid data" });
+      }
       if (err.message === "User not found") {
         return res.status(ERROR_CODES.NOT_FOUND).send({ message: err.message });
       }
@@ -116,7 +121,7 @@ const updateUser = (req, res, next) => {
           .status(ERROR_CODES.INVALID_DATA)
           .send({ message: "Invalid ID" });
       }
-      return next(err);
+      return res.status(500).send({ message: "Internal Server Error" });
     });
 };
 
