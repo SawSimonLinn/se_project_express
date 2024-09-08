@@ -6,12 +6,10 @@ const UserSchema = require("../models/user");
 const { ERROR_CODES } = require("../utils/errors");
 
 // ? Create a new user (POST/api/users)
-const createUsers = async (req, res) => {
+const createUsers = (req, res) => {
   const { name, avatar, email, password } = req.body;
 
-  try {
-    const hashedPassword = await bcrypt.hash(password, 10);
-
+  bcrypt.hash(password, 10).then((hashedPassword) => {
     const user = new UserSchema({
       name,
       avatar,
@@ -19,29 +17,30 @@ const createUsers = async (req, res) => {
       password: hashedPassword,
     });
 
-    const savedUser = await user.save();
-    const userObject = savedUser.toObject();
-    delete userObject.password;
-    res.send({ data: userObject });
-  } catch (e) {
-    console.error(e);
-    if (e.name === "ValidationError") {
-      return res
-        .status(ERROR_CODES.INVALID_DATA)
-        .send({ message: "Invalid data" });
-    }
-    if (e.code === 11000) {
-      return res
-        .status(ERROR_CODES.CONFLICT)
-        .send({ message: "User with this email already exists" });
-    }
-    return res
-      .status(ERROR_CODES.SERVER_ERROR)
-      .send({ message: "Error from createUsers" });
-  }
-  return res
-    .status(ERROR_CODES.REQUEST_SUCCESSFUL)
-    .send({ message: "User created" });
+    user
+      .save()
+      .then((savedUser) => {
+        const userObject = savedUser.toObject();
+        delete userObject.password;
+        res.send({ data: userObject });
+      })
+      .catch((e) => {
+        console.error(e);
+        if (e.name === "ValidationError") {
+          return res
+            .status(ERROR_CODES.INVALID_DATA)
+            .send({ message: "Invalid data" });
+        }
+        if (e.code === 11000) {
+          return res
+            .status(ERROR_CODES.CONFLICT)
+            .send({ message: "User with this email already exists" });
+        }
+        return res
+          .status(ERROR_CODES.SERVER_ERROR)
+          .send({ message: "Error from createUsers" });
+      });
+  });
 };
 
 // ? Login user (POST/api/signin)
@@ -69,7 +68,9 @@ const loginUser = (req, res) => {
           .status(ERROR_CODES.UNAUTHORIZED)
           .send({ message: err.message });
       }
-      return res.status(500).send({ message: "Internal Server Error" });
+      return res
+        .status(ERROR_CODES.SERVER_ERROR)
+        .send({ message: "Internal Server Error" });
     });
 };
 
@@ -90,7 +91,9 @@ const getCurrentUser = (req, res) => {
           .status(ERROR_CODES.INVALID_DATA)
           .send({ message: "Invalid ID" });
       }
-      return res.status(500).send({ message: "Internal Server Error" });
+      return res
+        .status(ERROR_CODES.SERVER_ERROR)
+        .send({ message: "Internal Server Error" });
     });
 };
 
@@ -121,7 +124,9 @@ const updateUser = (req, res) => {
           .status(ERROR_CODES.INVALID_DATA)
           .send({ message: "Invalid ID" });
       }
-      return res.status(500).send({ message: "Internal Server Error" });
+      return res
+        .status(ERROR_CODES.SERVER_ERROR)
+        .send({ message: "Internal Server Error" });
     });
 };
 
