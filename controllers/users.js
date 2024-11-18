@@ -1,139 +1,121 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const { JWT_SECRET } = require("../utils/config");
+const JWT_SECRET = require("../utils/config");
+const User = require("../models/user");
+const { BadRequestError } = require("../errors/BadRequstError");
+const { NotAuthorized } = require("../errors/NotAuthorized");
+const {
+  OKAY_REQUEST,
+  CREATE_REQUEST,
+  handleErrors,
+} = require("../utils/errors");
 
-const UserSchema = require("../models/user");
-const { ERROR_CODES } = require("../utils/errors");
+// This can become getCurrentUser
+// instead of getting ID from params
+// you get from req.user
+const getCurrentUser = (req, res, next) => {
+  const userId = req.user._id;
+  User.findById(userId)
+    .orFail()
+    .then((user) => res.status(OKAY_REQUEST).send(user))
+    .catch((err) => {
+      console.error(err);
 
-// ? Create a new user (POST/api/users)
-const createUsers = (req, res) => {
+      handleErrors(err, next);
+    });
+};
+const createUser = (req, res, next) => {
   const { name, avatar, email, password } = req.body;
 
-  bcrypt.hash(password, 10).then((hashedPassword) => {
-    const user = new UserSchema({
-      name,
-      avatar,
-      email,
-      password: hashedPassword,
-    });
-
-    user
-      .save()
-      .then((savedUser) => {
-        const userObject = savedUser.toObject();
-        delete userObject.password;
-        res.send({ data: userObject });
+  bcrypt
+    .hash(password, 10)
+    .then((hash) =>
+      User.create({
+        name,
+        avatar,
+        email,
+        password: hash,
       })
-      .catch((e) => {
-        console.error(e);
-        if (e.name === "ValidationError") {
-          return res
-            .status(ERROR_CODES.INVALID_DATA)
-            .send({ message: "Invalid data" });
-        }
-        if (e.code === 11000) {
-          return res
-            .status(ERROR_CODES.CONFLICT)
-            .send({ message: "User with this email already exists" });
-        }
-        return res
-          .status(ERROR_CODES.SERVER_ERROR)
-          .send({ message: "Error from createUsers" });
-      });
-  });
+    )
+    .then((user) =>
+      res.status(CREATE_REQUEST).send({
+        name: user.name,
+        avatar: user.avatar,
+        email: user.email,
+      })
+    )
+    .catch((error) => {
+      handleErrors(error, next);
+    });
 };
-
-// ? Login user (POST/api/signin)
-const loginUser = (req, res) => {
+const logIn = (req, res, next) => {
   const { email, password } = req.body;
 
   if (!email || !password) {
-    return res
-      .status(ERROR_CODES.INVALID_DATA)
-      .send({ message: "Email and password are required" });
+    throw new BadRequestError("Invalid data");
   }
 
-  return UserSchema.findUserByCredentials(email, password)
+  User.findOne({ email })
+    .select("+password")
     .then((user) => {
-      const token = jwt.sign({ _id: user._id }, JWT_SECRET, {
-        expiresIn: "7d",
+      if (!user) {
+        throw new NotAuthorized("NotAuthorizedError");
+      }
+      return bcrypt.compare(password, user.password).then((isMatch) => {
+        if (!isMatch) {
+          throw new NotAuthorized("NotAuthorizedError");
+        }
+
+        const token = jwt.sign({ _id: user._id }, JWT_SECRET, {
+          expiresIn: "7d",
+        });
+
+        return res.status(OKAY_REQUEST).send({
+          token,
+          name: user.name,
+          email: user.email,
+          avatar: user.avatar,
+          _id: user._id,
+        });
       });
-
-      res.status(ERROR_CODES.REQUEST_SUCCESSFUL).send({ token });
     })
-    .catch((err) => {
-      console.error(err);
-      if (err.message === "Incorrect email or password.") {
-        return res
-          .status(ERROR_CODES.UNAUTHORIZED)
-          .send({ message: err.message });
-      }
-      return res
-        .status(ERROR_CODES.SERVER_ERROR)
-        .send({ message: "Internal Server Error" });
-    });
+    .catch((err) => handleErrors(err, next));
 };
+const updateUser = (req, res, next) => {
+  User.findByIdAndUpdate(
+    req.user._id,
+    { name: req.body.name, avatar: req.body.avatar },
 
-// ? Get current user (GET/api/users/me)
-const getCurrentUser = (req, res) => {
-  const { _id } = req.user;
-
-  UserSchema.findById(_id)
-    .orFail(new Error("User not found"))
-    .then((user) => res.send(user))
-    .catch((err) => {
-      console.error(err);
-      if (err.message === "User not found") {
-        return res.status(ERROR_CODES.NOT_FOUND).send({ message: err.message });
-      }
-      if (err.name === "CastError") {
-        return res
-          .status(ERROR_CODES.INVALID_DATA)
-          .send({ message: "Invalid ID" });
-      }
-      return res
-        .status(ERROR_CODES.SERVER_ERROR)
-        .send({ message: "Internal Server Error" });
-    });
-};
-
-// ? Update user (PATCH/api/users/me)
-const updateUser = (req, res) => {
-  const { _id } = req.user;
-  const { name, avatar } = req.body;
-
-  UserSchema.findByIdAndUpdate(
-    _id,
-    { name, avatar },
-    { new: true, runValidators: true }
+    // pass the options object:
+    {
+      new: true, // the then handler receives the updated entry as input
+      runValidators: true, // the data will be validated before the update
+    }
   )
-    .orFail(new Error("User not found"))
-    .then((user) => res.send(user))
-    .catch((err) => {
-      console.error(err);
-      if (err.name === "ValidationError") {
-        return res
-          .status(ERROR_CODES.INVALID_DATA)
-          .send({ message: "Invalid data" });
-      }
-      if (err.message === "User not found") {
-        return res.status(ERROR_CODES.NOT_FOUND).send({ message: err.message });
-      }
-      if (err.name === "CastError") {
-        return res
-          .status(ERROR_CODES.INVALID_DATA)
-          .send({ message: "Invalid ID" });
-      }
-      return res
-        .status(ERROR_CODES.SERVER_ERROR)
-        .send({ message: "Internal Server Error" });
+    .then((user) => res.send({ data: user }))
+    .catch((error) => {
+      console.error(error.name);
+      handleErrors(error, next);
     });
 };
 
-// Export the functions
 module.exports = {
-  createUsers,
-  loginUser,
+  createUser,
   getCurrentUser,
+  logIn,
   updateUser,
 };
+
+// when a user signs up on the frontend we fetch to the backend:
+// fetch(url, {
+//   headers: {
+//     authorization:
+//   },
+//   body: {
+//     name:
+//     email:
+//     password:
+//     avatar:
+//   }
+// })
+//
