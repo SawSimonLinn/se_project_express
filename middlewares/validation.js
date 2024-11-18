@@ -7,6 +7,8 @@ const validateURL = (value, helpers) => {
   }
   return helpers.error("string.uri");
 };
+
+// ? validateCardBody the body of the request
 const validateCardBody = celebrate({
   body: Joi.object().keys({
     name: Joi.string().required().min(2).max(30).messages({
@@ -22,6 +24,8 @@ const validateCardBody = celebrate({
     weather: Joi.string().valid("hot", "cold", "warm"),
   }),
 });
+
+// ? validateUserBody the body of the request
 const validateUserBody = celebrate({
   body: Joi.object().keys({
     name: Joi.string().required().min(2).max(30).messages({
@@ -46,6 +50,8 @@ const validateUserBody = celebrate({
     }),
   }),
 });
+
+// ? validateAuthentication the body of the request
 const validateAuthentication = celebrate({
   body: Joi.object().keys({
     email: Joi.string()
@@ -61,6 +67,7 @@ const validateAuthentication = celebrate({
   }),
 });
 
+// ? validateUser the body of the request
 const validateUser = celebrate({
   body: Joi.object().keys({
     name: Joi.string().required().min(2).max(30).messages({
@@ -75,11 +82,14 @@ const validateUser = celebrate({
     }),
   }),
 });
+
+// ? validateId the id of the request
 const validateId = celebrate({
   params: Joi.object().keys({
     itemId: Joi.string().alphanum().length(24),
   }),
 });
+
 module.exports = {
   validateAuthentication,
   validateUserBody,

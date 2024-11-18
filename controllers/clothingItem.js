@@ -5,6 +5,7 @@ const { DEFAULT } = require("./users");
 const BadRequestError = require("../errors/BadRequstError");
 const { ForbiddenError } = require("../errors/ForbiddenError");
 
+// *This function is used to create a new item
 const createItem = (req, res, next) => {
   const { name, weather, imageUrl } = req.body;
   if (!name || name.length < 2) {
@@ -22,6 +23,7 @@ const createItem = (req, res, next) => {
     });
 };
 
+// * This function is used to get all items
 const getItems = (req, res, next) => {
   ClothingItem.find({})
     .then((items) => res.status(OKAY_REQUEST).send(items))
@@ -31,6 +33,7 @@ const getItems = (req, res, next) => {
     });
 };
 
+// * This function is used to delete an item
 const deleteItem = (req, res, next) => {
   const { itemId } = req.params;
   ClothingItem.findById(itemId)
@@ -45,6 +48,7 @@ const deleteItem = (req, res, next) => {
       handleErrors(err, next);
     });
 };
+// * This function is used to like an item
 const likeItem = (req, res, next) => {
   const { itemId } = req.params;
   ClothingItem.findByIdAndUpdate(
@@ -61,6 +65,7 @@ const likeItem = (req, res, next) => {
     });
 };
 
+// * This function is used to delete a like from an item
 const deleteLike = (req, res, next) => {
   const { itemId } = req.params;
   ClothingItem.findByIdAndUpdate(

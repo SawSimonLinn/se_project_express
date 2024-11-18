@@ -1,6 +1,5 @@
 const jwt = require("jsonwebtoken");
 const JWT_SECRET = require("../utils/config");
-// const { NOT_AUTHORIZED, NotAuthorized } = require("../utils/errors");
 const { NotAuthorized } = require("../errors/NotAuthorized");
 
 module.exports = (req, res, next) => {
@@ -14,15 +13,13 @@ module.exports = (req, res, next) => {
   let payload;
 
   try {
-    // trying to verify the token
+    // if token is valid
     payload = jwt.verify(token, JWT_SECRET);
   } catch (err) {
-    // we return an error if something goes wrong
+    // if token is invalid
     return next(new NotAuthorized("Authorization required"));
   }
 
   req.user = payload;
   return next();
-  // save the payload to req.user
-  // call next method
 };

@@ -10,9 +10,7 @@ const {
   handleErrors,
 } = require("../utils/errors");
 
-// This can become getCurrentUser
-// instead of getting ID from params
-// you get from req.user
+// * GET /users/me
 const getCurrentUser = (req, res, next) => {
   const userId = req.user._id;
   User.findById(userId)
@@ -24,6 +22,8 @@ const getCurrentUser = (req, res, next) => {
       handleErrors(err, next);
     });
 };
+
+// * POST /users
 const createUser = (req, res, next) => {
   const { name, avatar, email, password } = req.body;
 
@@ -48,6 +48,8 @@ const createUser = (req, res, next) => {
       handleErrors(error, next);
     });
 };
+
+// * POST /users/login
 const logIn = (req, res, next) => {
   const { email, password } = req.body;
 
@@ -81,15 +83,16 @@ const logIn = (req, res, next) => {
     })
     .catch((err) => handleErrors(err, next));
 };
+
+// * PATCH /users/me
 const updateUser = (req, res, next) => {
   User.findByIdAndUpdate(
     req.user._id,
     { name: req.body.name, avatar: req.body.avatar },
 
-    // pass the options object:
     {
-      new: true, // the then handler receives the updated entry as input
-      runValidators: true, // the data will be validated before the update
+      new: true,
+      runValidators: true,
     }
   )
     .then((user) => res.send({ data: user }))
@@ -105,17 +108,3 @@ module.exports = {
   logIn,
   updateUser,
 };
-
-// when a user signs up on the frontend we fetch to the backend:
-// fetch(url, {
-//   headers: {
-//     authorization:
-//   },
-//   body: {
-//     name:
-//     email:
-//     password:
-//     avatar:
-//   }
-// })
-//
