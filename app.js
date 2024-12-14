@@ -9,12 +9,7 @@ const { PORT = 3001 } = process.env;
 
 const { errors } = require("celebrate");
 const { requestLogger, errorLogger } = require("./middlewares/logger");
-const {
-  validateUserBody,
-  validateAuthentication,
-} = require("./middlewares/validation");
 
-const { logIn, createUser } = require("./controllers/users");
 const mainRouter = require("./routes/index");
 
 mongoose
@@ -31,9 +26,6 @@ app.get("/crash-test", () => {
     throw new Error("Server will crash now");
   }, 0);
 });
-
-app.post("/signin", validateAuthentication, logIn);
-app.post("/signup", validateUserBody, createUser);
 
 app.use("/", mainRouter);
 app.use(errorLogger);
