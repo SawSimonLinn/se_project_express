@@ -53,7 +53,7 @@ npm install
 
 3.  Set up environment variables:
 
-    Create a `.env` file in the root directory and add the following:
+Create a `.env` file in the root directory and add the following:
 
 ```bash
 PORT=3000
