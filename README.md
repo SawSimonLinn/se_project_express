@@ -15,7 +15,7 @@ This project serves as the back-end for the WTWR (What to Wear?) application, ma
 - **Authentication & Authorization:** Secure routes using JWT tokens to ensure data privacy.
 - **Error Handling:** Comprehensive error handling for robust application performance.
 
-![API Request Flow](https://example.com/api-request-flow.gif)
+![API Request Flow](https://datasciencedojo.com/wp-content/uploads/Understanding-REST-API.png.webp)
 
 ## Live Demo
 
@@ -40,38 +40,37 @@ To run this project locally, ensure you have the following:
 
 1. **Clone the repository:**
 
-   ```bash
-   git clone https://github.com/SawSimonLinn/se_project_express.git
-   cd se_project_express
-   ```
+```bash
+git clone https://github.com/SawSimonLinn/se_project_express.git
+cd se_project_express
+```
 
- 2. Install dependencies:
+2. Install dependencies:
 
- ```bash
- npm install
- ```
+```bash
+npm install
+```
 
+3.  Set up environment variables:
 
-3. Set up environment variables:
+    Create a `.env` file in the root directory and add the following:
 
-  Create a `.env` file in the root directory and add the following:
-
-   ```bash
-   PORT=3000
-  MONGODB_URI=your_mongodb_connection_string
-  JWT_SECRET=your_jwt_secret
-   ```
+```bash
+PORT=3000
+MONGODB_URI=your_mongodb_connection_string
+JWT_SECRET=your_jwt_secret
+```
 
 4. Start the server:
 
-   ```bash
-   npm start
-   ```
+```bash
+npm start
+```
 
- For development with hot-reloading:
+For development with hot-reloading:
 
-   ```bash
-  npm run dev
+```bash
+npm run dev
 ```
 
 ### Future Improvements
