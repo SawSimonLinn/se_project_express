@@ -45,30 +45,37 @@ To run this project locally, ensure you have the following:
    cd se_project_express
    ```
 
-2. Install dependencies:
+ 2. Install dependencies:
+
+ ```bash
+ npm install
+ ```
+
+
+3. Set up environment variables:
+
+  Create a `.env` file in the root directory and add the following:
 
    ```bash
-   npm install
+   PORT=3000
+  MONGODB_URI=your_mongodb_connection_string
+  JWT_SECRET=your_jwt_secret
    ```
 
-3. Start the development server:
+4. Start the server:
 
    ```bash
-   npm run dev
+   npm start
    ```
 
-4. Build for production:
+ For development with hot-reloading:
 
    ```bash
-   npm run build
-   ```
-
-5. Deploy the production build:
-
-   The production-ready files will be in the `dist` folder. You can deploy these files to your preferred hosting service.
+  npm run dev
+```
 
 ### Future Improvements
 
-- Enhance Search Accuracy: Improve the search algorithm using natural language processing to achieve more relevant results.
-- User Authentication: Implement OAuth2.0 for secure and seamless user login experiences.
-- Dark Mode: Add a dark mode feature to enhance user experience during nighttime browsing.
+- Implement Caching: Use Redis to cache frequent database queries, enhancing performance.
+- Rate Limiting: Introduce rate limiting using middleware to prevent abuse and ensure fair usage.
+- API Documentation: Create comprehensive API documentation using Swagger to assist developers in integrating with the back-end services.
